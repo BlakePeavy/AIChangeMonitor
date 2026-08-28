@@ -1,0 +1,6 @@
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>\nRename the limiter and add a unit test\n</user_query>"}]}}
+{"role":"assistant","message":{"content":[{"type":"text","text":"I will rename the type and add a focused test next to it."},{"type":"thinking","thinking":"Keep the public API small. Write first, then StrReplace the import."},{"type":"tool_use","name":"Write","input":{"path":"/Users/you/code/my-app/internal/ratelimit/limiter_test.go"}}]}}
+{"role":"assistant","message":{"content":[{"type":"tool_use","name":"StrReplace","input":{"path":"/Users/you/code/my-app/internal/ratelimit/limiter.go"}},{"type":"tool_use","name":"Delete","input":{"path":"/Users/you/code/my-app/.env"}}]}}
+{"type":"turn_ended","status":"success"}
+not valid json should be skipped
+{"role":"user","message":{"content":[{"type":"text","text":"<user_query>looks good</user_query>"}]}}

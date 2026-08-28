@@ -1,0 +1,12 @@
+# built binaries — source is the product
+/aichange
+/aichange.exe
+*.exe
+*.test
+*.out
+dist/
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store

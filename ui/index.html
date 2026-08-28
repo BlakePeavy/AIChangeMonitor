@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Change Monitor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="mark">AI</span>
+      <div>
+        <h1>Change Monitor</h1>
+        <p class="repo" id="repo">scanning…</p>
+      </div>
+    </div>
+    <nav class="filters" id="filters">
+      <button data-f="all" class="on">All</button>
+      <button data-f="ai">AI only</button>
+      <button data-f="unreviewed">Unreviewed</button>
+      <button data-f="flagged">Flagged</button>
+      <button data-f="high">High risk</button>
+    </nav>
+    <div class="keys">j k · enter · a accept · f flag · s seen</div>
+  </header>
+  <main>
+    <aside id="list" class="list"></aside>
+    <section id="detail" class="detail">
+      <div class="empty" id="empty">No agent sessions matched this repo.</div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
