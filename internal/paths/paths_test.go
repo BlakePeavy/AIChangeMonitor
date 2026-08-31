@@ -112,10 +112,12 @@ func TestClaudeCursorOverrides(t *testing.T) {
 	t.Setenv("AICHANGE_CLAUDE_PROJECTS", "/tmp/claude-projects")
 	t.Setenv("AICHANGE_CURSOR_PROJECTS", "/tmp/cursor-projects")
 	got := ClaudeProjectsDirs()
-	if len(got) != 1 || got[0] != "/tmp/claude-projects" {
-		t.Fatalf("claude override: %v", got)
+	wantClaude := filepath.Clean("/tmp/claude-projects")
+	if len(got) != 1 || got[0] != wantClaude {
+		t.Fatalf("claude override: %v want %q", got, wantClaude)
 	}
-	if CursorProjectsDir() != "/tmp/cursor-projects" {
-		t.Fatalf("cursor override: %s", CursorProjectsDir())
+	wantCursor := filepath.Clean("/tmp/cursor-projects")
+	if CursorProjectsDir() != wantCursor {
+		t.Fatalf("cursor override: %s want %q", CursorProjectsDir(), wantCursor)
 	}
 }

@@ -38,6 +38,7 @@ func initRepo(t *testing.T) string {
 	run("init")
 	run("config", "user.email", "aichange@test")
 	run("config", "user.name", "aichange")
+	run("config", "core.autocrlf", "false")
 	if err := os.WriteFile(filepath.Join(dir, "README"), []byte("hi\n"), 0644); err != nil {
 		t.Fatal(err)
 	}

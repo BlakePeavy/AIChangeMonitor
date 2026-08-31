@@ -74,7 +74,8 @@ func TestRestoreLiveFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(b) != "hi\n" {
+	got := strings.ReplaceAll(string(b), "\r\n", "\n")
+	if got != "hi\n" {
 		t.Fatalf("content %q", b)
 	}
 }
