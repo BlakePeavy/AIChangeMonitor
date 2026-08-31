@@ -14,13 +14,17 @@ import (
 	"github.com/BlakePeavy/AIChangeMonitor/ui"
 )
 
+const commitRefresh = 15 * time.Second
+
 type Server struct {
-	Store  *store.Store
-	Repo   string
-	Poll   time.Duration
-	mu     sync.Mutex
-	gitPO  string
-	lastN  int
+	Store      *store.Store
+	Repo       string
+	Poll       time.Duration
+	mu         sync.Mutex
+	gitPO      string
+	lastN      int
+	lastHEAD   string
+	lastCommit time.Time
 }
 
 func New(st *store.Store, repo string, poll time.Duration) *Server {
@@ -40,6 +44,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/review", s.review)
 	mux.HandleFunc("/api/git", s.git)
 	mux.HandleFunc("/api/scan", s.scanNow)
+	mux.HandleFunc("/api/repo", s.setRepo)
+	mux.HandleFunc("/api/restore", s.restore)
+	mux.HandleFunc("/api/reveal", s.reveal)
 	return mux
 }
 
@@ -51,17 +58,47 @@ func (s *Server) StartPoll() {
 		t := time.NewTicker(s.Poll)
 		defer t.Stop()
 		for range t.C {
-			s.scanOnce()
+			s.scanOnce(false)
 		}
 	}()
 }
 
-func (s *Server) scanOnce() {
-	n, _ := ingest.Scan(s.Store, s.Repo)
-	po, _ := gitx.Status(s.Repo)
+func (s *Server) repo() string {
 	s.mu.Lock()
-	s.lastN = n
-	s.gitPO = po
+	defer s.mu.Unlock()
+	return s.Repo
+}
+
+func (s *Server) bindRepo(root string) {
+	s.mu.Lock()
+	s.Repo = root
+	s.gitPO = ""
+	s.lastN = 0
+	s.lastHEAD = ""
+	s.lastCommit = time.Time{}
+	s.mu.Unlock()
+}
+
+func (s *Server) scanOnce(forceCommits bool) {
+	repo := s.repo()
+	if repo == "" {
+		return
+	}
+	head := gitx.HEAD(repo)
+	s.mu.Lock()
+	doCommits := forceCommits || head != s.lastHEAD || time.Since(s.lastCommit) >= commitRefresh
+	if doCommits {
+		s.lastHEAD = head
+		s.lastCommit = time.Now()
+	}
+	s.mu.Unlock()
+	n, _ := ingest.ScanPoll(s.Store, repo, doCommits)
+	po, _ := gitx.Status(repo)
+	s.mu.Lock()
+	if s.Repo == repo {
+		s.lastN = n
+		s.gitPO = po
+	}
 	s.mu.Unlock()
 }
 
@@ -71,7 +108,7 @@ func writeJSON(w http.ResponseWriter, v any) {
 }
 
 func (s *Server) sessions(w http.ResponseWriter, r *http.Request) {
-	list, err := s.Store.List(s.Repo)
+	list, err := s.Store.List(s.repo())
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

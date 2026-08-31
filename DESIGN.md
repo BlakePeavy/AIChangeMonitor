@@ -8,11 +8,11 @@ Seniors reviewing AI-touched code need what changed, why the agent did it, when 
 
 `aichange` occupies that hole. git-ai and AgentNote need agent hooks for line authorship. vibe-replay browses sessions and never looks at git. git-why writes `.why/` at commit (Cursor adapter unshipped). We join session logs to the working tree to why, locally, with no repo pollution.
 
-Git stays the source of truth for history. This tool is a reviewer overlay: ingest transcripts, match them to a repo root, show `git status` / `git diff` / `git log --since` restricted to the files that session touched, and keep accept/flag/seen in *our* index.
+Git stays the source of truth for history. This tool is a reviewer overlay. The default feed is git log (recent commits) plus the dirty working tree as a live session — first run in any repo is never empty. Transcripts, when present, upgrade why (prompt/thinking only; never invented). Show `git show` for a commit, worktree+cached diff for live, and keep accept/flag/seen in *our* index.
 
 ## How a session is built
 
-1. Discover Claude Code and Cursor JSONL next to the user home (never inside the repo).
+1. Upsert recent `git log --numstat` commits as `git:<sha>` and one `live:<fingerprint>` session from porcelain + staged/unstaged numstat. Then discover Claude Code and Cursor JSONL next to the user home (never inside the repo).
 2. Match workspace by encoded path == repo root (or session cwd under that root).
 3. First human user prompt becomes intent (Cursor user_query unwrapped). Redacted.
 4. Assistant text and thinking before the first Edit/Write becomes why (3-8 lines). Redacted.

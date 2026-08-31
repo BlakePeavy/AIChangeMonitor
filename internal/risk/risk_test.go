@@ -29,7 +29,9 @@ func TestChipsTable(t *testing.T) {
 		{"del", []model.File{{Path: "old.go", Delete: true}}, 0, 0, []string{"deletes"}, nil},
 		{"tdel", []model.File{{Path: "foo_test.go", Delete: true}}, 0, 0, []string{"deletes", "tests-deleted"}, nil},
 		{"blastL", []model.File{{Path: "big.go"}}, 500, 300, []string{"blast-radius"}, nil},
-		{"author", []model.File{{Path: "internal/author.go"}}, 0, 0, nil, []string{"secrets"}},
+		{"author", []model.File{{Path: "internal/author.go"}}, 0, 0, nil, []string{"secrets", "auth"}},
+		{"authdir", []model.File{{Path: "internal/auth/middleware.go"}}, 0, 0, []string{"auth"}, []string{"secrets"}},
+		{"gitenv", []model.File{{Path: ".env", Added: 2, Deleted: 1}, {Path: "foo_test.go", Delete: true, Added: 0, Deleted: 20}}, 2, 21, []string{"secrets", "tests-deleted"}, nil},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

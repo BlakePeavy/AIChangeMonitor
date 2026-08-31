@@ -20,11 +20,17 @@ func sensitivePath(p string) bool {
 	if strings.Contains(base, "secret") || strings.Contains(base, "credential") {
 		return true
 	}
-	if strings.Contains(low, "/auth/") || strings.HasPrefix(base, "auth.") {
-		return true
-	}
 	if base == "id_rsa" || base == "id_ed25519" {
 		return true
 	}
 	return base == "credentials.json"
+}
+
+func authPath(p string) bool {
+	low := strings.ToLower(filepath.ToSlash(p))
+	base := filepath.Base(low)
+	if strings.Contains(low, "/auth/") || strings.HasPrefix(base, "auth.") {
+		return true
+	}
+	return false
 }

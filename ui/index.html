@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>AI Change Monitor</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -12,24 +13,43 @@
       <span class="mark">AI</span>
       <div>
         <h1>Change Monitor</h1>
-        <p class="repo" id="repo">scanning…</p>
+        <div class="repo" id="repo">
+          <span class="repo-path" id="repo-path" title="Click to switch folder">scanning…</span>
+          <span class="repo-branch" id="repo-branch"></span>
+          <input class="repo-input" id="repo-input" type="text" hidden autocomplete="off" spellcheck="false">
+          <div class="repo-recent" id="repo-recent" hidden></div>
+        </div>
+        <p class="repo-err" id="repo-err" hidden></p>
       </div>
     </div>
     <nav class="filters" id="filters">
       <button data-f="all" class="on">All</button>
-      <button data-f="ai">AI only</button>
       <button data-f="unreviewed">Unreviewed</button>
-      <button data-f="flagged">Flagged</button>
-      <button data-f="high">High risk</button>
+      <button data-f="danger">Danger</button>
     </nav>
     <div class="keys">j k · enter · a accept · f flag · s seen</div>
   </header>
   <main>
     <aside id="list" class="list"></aside>
     <section id="detail" class="detail">
-      <div class="empty" id="empty">No agent sessions matched this repo.</div>
+      <div class="empty" id="empty">Nothing to review right now. Working tree is clean.</div>
     </section>
   </main>
+  <div id="file-menu" class="ctx-menu" hidden>
+    <div class="ctx-items" id="ctx-items">
+      <button type="button" id="ctx-restore">Restore this file</button>
+      <button type="button" id="ctx-copy">Copy path</button>
+      <button type="button" id="ctx-reveal">Reveal in folder</button>
+    </div>
+    <div class="ctx-confirm" id="ctx-confirm" hidden>
+      <p>Restore this file to the last pushed (or HEAD) version? Local edits to this file will be lost.</p>
+      <div class="ctx-confirm-act">
+        <button type="button" id="ctx-ok">Confirm</button>
+        <button type="button" id="ctx-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast" hidden></div>
   <script src="app.js"></script>
 </body>
 </html>

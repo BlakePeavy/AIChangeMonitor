@@ -7,8 +7,10 @@ import (
 	"github.com/BlakePeavy/AIChangeMonitor/internal/model"
 )
 
+const sessionCols = `id, agent, started_at, ended_at, cwd, repo, branch, intent, why, files, status, risks, source_path, source_mtime, added_lines, deleted_lines, source`
+
 func (s *Store) Get(id string) (model.Session, error) {
-	row := s.db.QueryRow(`SELECT id, agent, started_at, ended_at, cwd, repo, branch, intent, why, files, status, risks, source_path, source_mtime, added_lines, deleted_lines FROM sessions WHERE id = ?`, id)
+	row := s.db.QueryRow(`SELECT `+sessionCols+` FROM sessions WHERE id = ?`, id)
 	return scanSession(row)
 }
 
@@ -39,13 +41,13 @@ func (s *Store) Resolve(prefix string) (model.Session, error) {
 }
 
 func (s *Store) List(repo string) ([]model.Session, error) {
-	q := `SELECT id, agent, started_at, ended_at, cwd, repo, branch, intent, why, files, status, risks, source_path, source_mtime, added_lines, deleted_lines FROM sessions`
+	q := `SELECT ` + sessionCols + ` FROM sessions`
 	var args []any
 	if repo != "" {
 		q += ` WHERE repo = ?`
 		args = append(args, repo)
 	}
-	q += ` ORDER BY started_at DESC, id DESC`
+	q += ` ORDER BY CASE WHEN COALESCE(source,'') = 'live' OR id LIKE 'live:%' THEN 0 ELSE 1 END, started_at DESC, id DESC`
 	rows, err := s.db.Query(q, args...)
 	if err != nil {
 		return nil, err

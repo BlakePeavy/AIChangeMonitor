@@ -10,7 +10,7 @@ import (
 func Chips(files []model.File, added, deleted int) []string {
 	out := []string{}
 	n := len(files)
-	var sens, del, testdel, hasLock bool
+	var sens, auth, del, testdel, hasLock bool
 	for _, f := range files {
 		base := strings.ToLower(filepath.Base(f.Path))
 		if isLock(base) {
@@ -18,6 +18,9 @@ func Chips(files []model.File, added, deleted int) []string {
 		}
 		if sensitivePath(f.Path) {
 			sens = true
+		}
+		if authPath(f.Path) {
+			auth = true
 		}
 		if f.Delete {
 			del = true
@@ -28,6 +31,9 @@ func Chips(files []model.File, added, deleted int) []string {
 	}
 	if sens {
 		out = append(out, "secrets")
+	}
+	if auth {
+		out = append(out, "auth")
 	}
 	if hasLock && n >= 5 {
 		out = append(out, "lockfile")

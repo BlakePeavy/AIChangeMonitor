@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS sessions (
 	source_path TEXT,
 	source_mtime INTEGER,
 	added_lines INTEGER,
-	deleted_lines INTEGER
+	deleted_lines INTEGER,
+	source TEXT
 );
 CREATE TABLE IF NOT EXISTS sources (
 	path TEXT PRIMARY KEY,
@@ -56,5 +57,10 @@ CREATE TABLE IF NOT EXISTS sources (
 );
 CREATE INDEX IF NOT EXISTS sessions_repo ON sessions(repo);
 `)
-	return err
+	if err != nil {
+		return err
+	}
+	// Old DBs created before `source` existed. Ignore "duplicate column".
+	_, _ = s.db.Exec(`ALTER TABLE sessions ADD COLUMN source TEXT`)
+	return nil
 }

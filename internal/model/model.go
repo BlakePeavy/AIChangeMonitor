@@ -5,9 +5,22 @@ import "time"
 type Agent string
 
 const (
-	AgentClaudeCode Agent = "claude-code"
-	AgentCursor     Agent = "cursor"
-	AgentUnknown    Agent = "unknown"
+	AgentClaudeCode   Agent = "claude-code"
+	AgentCursor       Agent = "cursor"
+	AgentGit          Agent = "git"
+	AgentLive         Agent = "live"
+	AgentCopilot      Agent = "copilot"
+	AgentAider        Agent = "aider"
+	AgentCodex        Agent = "codex"
+	AgentWindsurf     Agent = "windsurf"
+	AgentUnknown      Agent = "unknown"
+	AgentUnknownAgent Agent = "unknown-agent"
+)
+
+const (
+	SourceTranscript = "transcript"
+	SourceCommit     = "commit"
+	SourceLive       = "live"
 )
 
 type Status string
@@ -28,15 +41,17 @@ func ParseStatus(s string) (Status, bool) {
 	}
 }
 
-// File is a path the agent wrote or deleted, joined from tool_use.
+// File is a path the agent wrote or deleted, joined from tool_use or git numstat.
 type File struct {
-	Path   string `json:"path"`
-	Tool   string `json:"tool,omitempty"`
-	Delete bool   `json:"delete,omitempty"`
-	Prompt string `json:"prompt,omitempty"`
+	Path    string `json:"path"`
+	Tool    string `json:"tool,omitempty"`
+	Delete  bool   `json:"delete,omitempty"`
+	Prompt  string `json:"prompt,omitempty"` // preceding user prompt
+	Added   int    `json:"added,omitempty"`
+	Deleted int    `json:"deleted,omitempty"`
 }
 
-// Session is the review unit: one agent conversation joined to a dirty tree.
+// Session is the review unit: one conversation, commit, or dirty tree.
 type Session struct {
 	ID           string    `json:"id"`
 	Agent        Agent     `json:"agent"`
@@ -50,6 +65,7 @@ type Session struct {
 	Files        []File    `json:"files"`
 	Status       Status    `json:"status"`
 	Risks        []string  `json:"risks"`
+	Source       string    `json:"source,omitempty"`
 	SourcePath   string    `json:"source_path"`
 	SourceMTime  int64     `json:"source_mtime"`
 	AddedLines   int       `json:"added_lines,omitempty"`
@@ -78,10 +94,24 @@ func (s Session) DeletedPaths() []string {
 
 func (s Session) HighRisk() bool {
 	for _, r := range s.Risks {
-		switch r {
-		case "secrets", "blast-radius", "tests-deleted":
+		if r == "blast-radius" || r == "secrets" || r == "tests-deleted" || r == "auth" {
 			return true
 		}
 	}
 	return false
+}
+
+// DeriveSource fills Source from the id prefix when the column is empty (old rows).
+func DeriveSource(id, source string) string {
+	if source != "" {
+		return source
+	}
+	switch {
+	case len(id) >= 5 && id[:5] == "live:":
+		return SourceLive
+	case len(id) >= 4 && id[:4] == "git:":
+		return SourceCommit
+	default:
+		return SourceTranscript
+	}
 }

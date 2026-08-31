@@ -1,9 +1,7 @@
 package ingest
 
 import (
-	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/BlakePeavy/AIChangeMonitor/internal/model"
 	"github.com/BlakePeavy/AIChangeMonitor/internal/paths"
@@ -14,6 +12,7 @@ func buildSession(agent model.Agent, id, source, repo string, mtime int64, evs [
 	sess := model.Session{
 		ID:          id,
 		Agent:       agent,
+		Source:      model.SourceTranscript,
 		SourcePath:  source,
 		SourceMTime: mtime,
 		Repo:        repo,
@@ -64,7 +63,11 @@ func buildSession(agent model.Agent, id, source, repo string, mtime int64, evs [
 			}
 			if strings.EqualFold(t.Name, "Bash") || strings.EqualFold(t.Name, "Shell") {
 				if !isMutateTool(t.Name) && p != "" {
-					del := t.Delete || bashIsDelete(asString(t.Input["command"]))
+					cmd := ""
+					if t.Input != nil {
+						cmd = asString(t.Input["command"])
+					}
+					del := t.Delete || bashIsDelete(cmd)
 					ops = append(ops, model.File{Path: rel(p, repo), Tool: t.Name, Delete: del, Prompt: lastPrompt})
 				}
 				continue
@@ -89,9 +92,6 @@ func buildSession(agent model.Agent, id, source, repo string, mtime int64, evs [
 	if sess.CWD == "" {
 		sess.CWD = repo
 	}
-	_ = filepath.Separator
-	_ = time.Time{}
-	_ = paths.RelToRepo
 	return sess
 }
 

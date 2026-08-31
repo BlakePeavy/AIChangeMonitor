@@ -20,9 +20,10 @@ func (s *Store) Upsert(sess model.Session) error {
 	if status == "" {
 		status = model.StatusUnseen
 	}
+	source := model.DeriveSource(sess.ID, sess.Source)
 	_, err = s.db.Exec(`
-INSERT INTO sessions (id, agent, started_at, ended_at, cwd, repo, branch, intent, why, files, status, risks, source_path, source_mtime, added_lines, deleted_lines)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO sessions (id, agent, started_at, ended_at, cwd, repo, branch, intent, why, files, status, risks, source_path, source_mtime, added_lines, deleted_lines, source)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(id) DO UPDATE SET
 	agent=excluded.agent,
 	started_at=excluded.started_at,
@@ -37,10 +38,16 @@ ON CONFLICT(id) DO UPDATE SET
 	source_path=excluded.source_path,
 	source_mtime=excluded.source_mtime,
 	added_lines=excluded.added_lines,
-	deleted_lines=excluded.deleted_lines
+	deleted_lines=excluded.deleted_lines,
+	source=excluded.source
 `, sess.ID, string(sess.Agent), fmtTime(sess.StartedAt), fmtTime(sess.EndedAt),
 		sess.CWD, sess.Repo, sess.Branch, sess.Intent, sess.Why, string(files),
-		status, string(risks), sess.SourcePath, sess.SourceMTime, sess.AddedLines, sess.DeletedLines)
+		status, string(risks), sess.SourcePath, sess.SourceMTime, sess.AddedLines, sess.DeletedLines, source)
+	return err
+}
+
+func (s *Store) Delete(id string) error {
+	_, err := s.db.Exec(`DELETE FROM sessions WHERE id = ?`, id)
 	return err
 }
 

@@ -1,90 +1,122 @@
 # AI Change Monitor
 
-Git is the ledger. The review unit is an agent session joined to the dirty working tree
-(what / why / when / who) **now**, not after commit.
+Git is the ledger. This is a local inbox for **reviewing what an AI agent just changed** — not a git GUI, and not a chat log browser.
 
-```
+A *session* is the unit of review: a dirty working tree, a recent commit, or (when present) a Claude Code / Cursor transcript joined to those files. The point is a 60-second keep / dig in / revert call: **what** moved, **why** if we actually have it, **when**, and whether it looks dangerous.
+
+It never writes the repo you are watching. No Git Notes, no hooks, no `.why/` files. Status (unseen / seen / accepted / flagged) lives only in a local index. Nothing is uploaded. There is no LLM in this tool.
+
+## Install
+
+Needs **Go 1.22+**. SQLite is pure Go (`modernc.org/sqlite`); leave `CGO_ENABLED=0`.
+
+```bash
+git clone https://github.com/BlakePeavy/AIChangeMonitor.git
+cd AIChangeMonitor
 go build -o aichange .
-# or: go install github.com/BlakePeavy/AIChangeMonitor@latest
 ```
 
-Requires **Go 1.22+**. Windows Go 1.19 cannot build this module; upgrade the toolchain
-and build from source. A prebuilt `.exe` is not the install method.
+Windows PowerShell:
 
-Same source builds on Windows, macOS, and Linux with `CGO_ENABLED=0` (pure Go SQLite).
-
-Cross-compile release artifacts if you want them:
-
-```
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o dist/aichange.exe .
-GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build -o dist/aichange-darwin-arm64 .
-GOOS=linux   GOARCH=amd64 CGO_ENABLED=0 go build -o dist/aichange-linux-amd64 .
+```powershell
+go build -o aichange.exe .
 ```
 
-`GOOS` may be `windows|darwin|linux`. `GOARCH` may be `amd64|arm64`.
+Or, without a clone:
 
-## 30-second usage
-
-From any git checkout (or pass `--repo`):
-
-```
-./aichange
-# same as: ./aichange serve
+```bash
+go install github.com/BlakePeavy/AIChangeMonitor@latest
 ```
 
-Opens the inbox at http://127.0.0.1:7380. Then:
+`make dist` cross-compiles Windows / macOS / Linux binaries into `dist/` (gitignored).
 
-```
-aichange sessions
-aichange sessions --json
-aichange show [id]
-aichange diff [id]
-aichange why internal/store/store.go
-aichange review <id> accept
-aichange review <id> flag
-aichange review <id> seen
+## Usage
+
+From any git checkout:
+
+```bash
+./aichange                  # Linux / macOS — scans, then serves the UI
+.\aichange.exe              # Windows (PowerShell needs the .\ )
 ```
 
-Inbox filters: All / AI / Unreviewed / Flagged / High risk.
-Keys: `j`/`k` move, `enter` open, `a` accept, `f` flag, `s` seen.
+```
+aichange listening on http://127.0.0.1:7380
+```
 
-Empty state: **No agent sessions matched this repo.**
+Open that URL, or skip the browser and use the [desktop window](#desktop-optional).
 
-Status lives only in the local index. Zero writes to the monitored repo.
-
-## Where things live
-
-| What | Path |
+| Command | What it does |
 | --- | --- |
-| Index (Linux/mac) | `$XDG_STATE_HOME/aichange/index.db` or `~/.local/state/aichange/index.db` |
-| Index (Windows) | `%LOCALAPPDATA%\aichange\index.db` |
-| Override | `AICHANGE_INDEX` |
-| Claude Code | `~/.claude/projects/<encoded-cwd>/*.jsonl` (nested `sessions/` ok). Windows: `%USERPROFILE%\.claude\projects\`. Honors `CLAUDE_CONFIG_DIR`. |
-| Cursor | `~/.cursor/projects/<slug>/agent-transcripts/*.jsonl` (nested ok). Windows: `%USERPROFILE%\.cursor\projects\`. Best-effort JSONL only. |
+| `aichange` / `aichange serve` | Scan + local web UI on `:7380` |
+| `aichange serve --repo PATH` | Watch a repo you are not currently in |
+| `aichange serve --addr :9000` | Pick a port |
+| `aichange sessions` | List sessions |
+| `aichange sessions --json` | Same, JSON |
+| `aichange show <id>` | One session |
+| `aichange diff <id>` | Patch |
+| `aichange why path/to/file` | Why for a path, if a transcript has it |
+| `aichange review <id> accept` | `accept` / `flag` / `seen` |
 
-Encoded cwd = every non-alphanumeric rune becomes `-`.
-Example: `/Users/you/code/my-app` → `-Users-you-code-my-app`.
+The UI header path is clickable: paste another folder, Enter, it rescan. **File → Open repo** does the same in the desktop app.
 
-Claude/Cursor project folders match when the encoded repo root equals the folder name.
+### Inbox
 
-## Privacy
+- Left: sessions. Live dirty tree, recent commits, transcripts when they match this repo.
+- Click a file for an inline diff. Right-click a file to restore (uncommitted or unpushed only), copy the path, or reveal it.
+- Filters: All / Unreviewed / Danger.
+- Keys: `j` `k` move, `enter` open, `a` accept (green), `f` flag (amber), `s` seen.
+- Danger chips (`secrets`, `auth`, `blast-radius`, `tests-deleted`) have hover explanations. We never invent a *why* — if there is no transcript, why is empty.
+- Theme follows the OS (warm paper in light, a dimmer room in dark).
 
-Transcripts contain source and secrets. Treat them as secret-bearing.
+Empty inbox means the working tree is clean and there are no recent commits. That is a successful first run only if git itself is empty.
 
-- Never upload transcripts or the index.
-- Never write the monitored repo (no Git Notes, no hooks, no `.why/`).
-- AWS keys, PEM blocks, `.env` assignments, and high-entropy tokens are redacted before store or print.
-- Offline. No network. No LLM. No telemetry.
-- SQLite via `modernc.org/sqlite` only (pure Go, `CGO_ENABLED=0`).
-- Shells out to `git`. No libgit2.
+## Desktop (optional)
 
-If a provider directory is missing, that provider is skipped.
+`desktop/` is a Tauri 2 window around the **same** Go engine. It does not rewrite the UI. The CLI still works without it.
+
+Needs Go 1.22+, Rust (rustup), Node.js (for the Tauri CLI), and a webview (WebView2 on Windows — already on current Win10/11).
+
+```bash
+cd desktop
+npm install
+# builds the Go sidecar, then the window
+npm run tauri dev      # development
+npm run tauri build    # installer + exe / app / deb
+```
+
+Windows PowerShell, from `desktop\`:
+
+```powershell
+npm install
+npm run tauri dev
+```
+
+First launch: **File → Open repo** and pick a git folder. Later launches reuse it.
+
+Build the native window **on the OS you want to ship**. The Go engine cross-compiles; Tauri does not (no Linux to Windows window).
+
+### Windows linker notes
+
+The default Rust host is MSVC. That needs the Visual Studio **Desktop C++** workload so `msvcrt.lib` exists. If `npm run tauri dev` dies with `LNK1104 cannot open file 'msvcrt.lib'`, either install that workload, or build with the GNU/MinGW target (`x86_64-pc-windows-gnu`) and put Git + MinGW on `PATH` ahead of stray `link.exe` copies (Cygwin / VS Insiders). Do not pin a GNU `rust-toolchain.toml` in this repo — it breaks everyone else.
+
+## Where data lives
+
+| What | Linux / macOS | Windows |
+| --- | --- | --- |
+| Index | `$XDG_STATE_HOME/aichange/index.db` or `~/.local/state/aichange/index.db` | `%LOCALAPPDATA%\aichange\index.db` |
+| Override | `AICHANGE_INDEX` | `AICHANGE_INDEX` |
+| Claude Code logs (read-only) | `~/.claude/projects/<encoded-cwd>/` | `%USERPROFILE%\.claude\projects\` |
+| Cursor logs (read-only) | `~/.cursor/projects/<slug>/agent-transcripts/` | `%USERPROFILE%\.cursor\projects\` |
+
+Encoded cwd = absolute path with every non-alphanumeric character turned into `-`.
+
+Zero writes into the monitored repo. Transcripts are treated as secret-bearing: AWS keys, PEM blocks, `.env` assignments, and high-entropy tokens are redacted on ingest.
 
 ## Non-goals
 
-Git Notes, hooks, `.why/` commits, daemons, `state.vscdb`, protobuf, Windsurf, Copilot `workspaceStorage`, Aider, an LLM summarizer, line-level blame.
+Git Notes, hooks, `.why/` commits, whole-tree daemons, vendor DB decode (`state.vscdb`, Windsurf `.pb`), Copilot `workspaceStorage`, an LLM summarizer, line-level blame.
 
-See [DESIGN.md](DESIGN.md).
+See [DESIGN.md](DESIGN.md) for how a session is built. Desktop wiring is in [DESKTOP.md](DESKTOP.md).
 
 ## License
 

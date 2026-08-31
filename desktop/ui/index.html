@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Change Monitor</title>
+  <style>
+    :root {
+      --bg: #f3eee4; --text: #1c1915; --muted: #6b6458;
+      --track: #e8dfd2; --thumb: #c4b49a; --mark: #f0c419; --mark-ink: #1c1915;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #26231f; --text: #d2cbc2; --muted: #9a9288;
+        --track: #322e29; --thumb: #5c554c; --mark: #d4b84a; --mark-ink: #1c1915;
+      }
+    }
+    html { color-scheme: light dark; scrollbar-width: thin; scrollbar-color: var(--thumb) var(--track); }
+    html, body {
+      margin: 0; height: 100%;
+      background: var(--bg); color: var(--muted);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    ::-webkit-scrollbar { width: 12px; }
+    ::-webkit-scrollbar-track { background: var(--track); }
+    ::-webkit-scrollbar-thumb { background: var(--thumb); border-radius: 999px; border: 3px solid var(--track); }
+    .wrap {
+      min-height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; user-select: none; padding: 24px;
+    }
+    .mark {
+      font-size: 11px; letter-spacing: 0.12em; font-weight: 700;
+      background: var(--mark); color: var(--mark-ink);
+      padding: 6px 9px; border-radius: 8px;
+    }
+    h1 { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -0.03em; color: var(--text); }
+    p {
+      margin: 0; font-size: 15px; color: var(--muted);
+      max-width: 28rem; text-align: center; line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="mark">AI</div>
+    <h1>Change Monitor</h1>
+    <p id="status">Starting engine…</p>
+  </div>
+</body>
+</html>

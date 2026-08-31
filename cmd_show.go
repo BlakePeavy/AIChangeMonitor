@@ -14,26 +14,17 @@ func cmdShow(args []string) error {
 		return err
 	}
 	id := fs.Arg(0)
+	if id == "" {
+		return fmt.Errorf("usage: aichange show [id]")
+	}
 	st, repo, err := openApp(*repoFlag)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
-	var sess model.Session
-	if id == "" {
-		list, err := st.List(repo)
-		if err != nil {
-			return err
-		}
-		if len(list) == 0 {
-			return fmt.Errorf("no sessions")
-		}
-		sess = list[0]
-	} else {
-		sess, err = st.Resolve(id)
-		if err != nil {
-			return err
-		}
+	sess, err := st.Resolve(id)
+	if err != nil {
+		return err
 	}
 	printSession(sess)
 	if log, err := gitx.LogSince(repo, sess.StartedAt, sess.FilePaths()); err == nil && log != "" {
@@ -48,21 +39,19 @@ func cmdDiff(args []string) error {
 		return err
 	}
 	id := fs.Arg(0)
+	if id == "" {
+		return fmt.Errorf("usage: aichange diff [id]")
+	}
 	st, repo, err := openApp(*repoFlag)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
-	var files []string
-	var sess model.Session
-	if id != "" {
-		sess, err = st.Resolve(id)
-		if err != nil {
-			return err
-		}
-		files = sess.FilePaths()
+	sess, err := st.Resolve(id)
+	if err != nil {
+		return err
 	}
-	raw, err := gitx.Diff(repo, files)
+	raw, err := server.SessionDiff(repo, sess)
 	if err != nil {
 		return err
 	}

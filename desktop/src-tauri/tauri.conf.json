@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Change Monitor",
+  "version": "0.1.0",
+  "identifier": "com.blakepeavy.changemonitor",
+  "build": {
+    "frontendDist": "../ui",
+    "beforeDevCommand": "python3 scripts/build-sidecar.py",
+    "beforeBuildCommand": "python3 scripts/build-sidecar.py"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Change Monitor",
+        "width": 1280,
+        "height": 840,
+        "minWidth": 880,
+        "minHeight": 560,
+        "resizable": true,
+        "backgroundColor": "#f3eee4",
+        "url": "index.html"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/aichange"
+    ],
+    "shortDescription": "Review AI-touched git changes locally",
+    "longDescription": "Native window around the aichange Go engine. The inbox UI is the existing embedded server; this shell only spawns it and opens a folder picker.",
+    "category": "DeveloperTool",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": false
+      },
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

@@ -10,6 +10,23 @@ import (
 )
 
 func Scan(st *store.Store, repo string) (int, error) {
+	return scan(st, repo, true)
+}
+
+func ScanPoll(st *store.Store, repo string, commits bool) (int, error) {
+	return scan(st, repo, commits)
+}
+
+func scan(st *store.Store, repo string, commits bool) (int, error) {
+	n, err := scanTranscripts(st, repo)
+	if err != nil {
+		return n, err
+	}
+	n2, err := ScanGit(st, repo, commits)
+	return n + n2, err
+}
+
+func scanTranscripts(st *store.Store, repo string) (int, error) {
 	files := append(discoverClaude(repo), discoverCursor(repo)...)
 	n := 0
 	for _, path := range files {
@@ -32,9 +49,8 @@ func Scan(st *store.Store, repo string) (int, error) {
 			_ = st.SetSourceMTime(path, mtime)
 			continue
 		}
-		if add, del, err := gitx.DiffStat(repo, sess.FilePaths()); err == nil {
-			sess.AddedLines = add
-			sess.DeletedLines = del
+		if stats, err := gitx.NumstatFiles(repo, sess.FilePaths()); err == nil {
+			applyFileStats(&sess, stats)
 		}
 		sess.Risks = risk.Chips(sess.Files, sess.AddedLines, sess.DeletedLines)
 		if err := st.Upsert(sess); err != nil {
@@ -44,6 +60,24 @@ func Scan(st *store.Store, repo string) (int, error) {
 		n++
 	}
 	return n, nil
+}
+
+func applyFileStats(sess *model.Session, stats []gitx.FileStat) {
+	by := map[string]gitx.FileStat{}
+	add, del := 0, 0
+	for _, st := range stats {
+		by[st.Path] = st
+		add += st.Added
+		del += st.Deleted
+	}
+	sess.AddedLines = add
+	sess.DeletedLines = del
+	for i, f := range sess.Files {
+		if st, ok := by[f.Path]; ok {
+			sess.Files[i].Added = st.Added
+			sess.Files[i].Deleted = st.Deleted
+		}
+	}
 }
 
 func isCursorPath(p string) bool {
