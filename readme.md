@@ -24,13 +24,15 @@ Windows PowerShell:
 go build -o aichange.exe .
 ```
 
-Or, without a clone:
+Or, without a clone. `@latest` needs a version tag; until then use `@main`:
 
 ```bash
-go install github.com/BlakePeavy/AIChangeMonitor@latest
+go install github.com/BlakePeavy/AIChangeMonitor@main
 ```
 
-`make dist` cross-compiles Windows / macOS / Linux binaries into `dist/` (gitignored).
+Pre-built CLI binaries (Windows / macOS / Linux, amd64 and arm64) are on each successful [Actions](https://github.com/BlakePeavy/AIChangeMonitor/actions) run. Tag `v*` (for example `v0.1.0`) and they also attach to a [GitHub Release](https://github.com/BlakePeavy/AIChangeMonitor/releases).
+
+`make dist` cross-compiles the same set into `dist/` (gitignored).
 
 ## Usage
 
@@ -95,7 +97,7 @@ npm run tauri dev
 
 First launch: **File → Open repo** and pick a git folder. Later launches reuse it.
 
-Build the native window **on the OS you want to ship**. The Go engine cross-compiles; Tauri does not (no Linux to Windows window).
+CI already builds Windows, macOS, and Linux installers on `main` (see [CI](#ci)). Locally, build the native window **on the OS you want to ship** — the Go engine cross-compiles, Tauri does not.
 
 ### Windows linker notes
 
