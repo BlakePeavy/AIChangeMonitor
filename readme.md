@@ -1,5 +1,7 @@
 # AI Change Monitor
 
+[![Build](https://github.com/BlakePeavy/AIChangeMonitor/actions/workflows/build.yml/badge.svg)](https://github.com/BlakePeavy/AIChangeMonitor/actions/workflows/build.yml)
+
 Git is the ledger. This is a local inbox for **reviewing what an AI agent just changed** — not a git GUI, and not a chat log browser.
 
 A *session* is the unit of review: a dirty working tree, a recent commit, or (when present) a Claude Code / Cursor transcript joined to those files. The point is a 60-second keep / dig in / revert call: **what** moved, **why** if we actually have it, **when**, and whether it looks dangerous.
@@ -117,6 +119,13 @@ Zero writes into the monitored repo. Transcripts are treated as secret-bearing: 
 Git Notes, hooks, `.why/` commits, whole-tree daemons, vendor DB decode (`state.vscdb`, Windsurf `.pb`), Copilot `workspaceStorage`, an LLM summarizer, line-level blame.
 
 See [DESIGN.md](DESIGN.md) for how a session is built. Desktop wiring is in [DESKTOP.md](DESKTOP.md).
+
+## CI
+
+- Pushes to main and tags run tests on Ubuntu, Windows, and macOS, publish CLI binaries (Windows/macOS/Linux amd64+arm64), and build the Tauri desktop app on all three OSes.
+- Pull requests run tests only (no desktop build).
+- Tags matching v* (example: v0.1.0) attach those artifacts to a GitHub Release.
+- Actions tab: https://github.com/BlakePeavy/AIChangeMonitor/actions
 
 ## License
 
